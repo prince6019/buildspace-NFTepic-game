@@ -18,10 +18,20 @@ async function main() {
   console.log(`deployed at ${epicGame.address}`);
 
   let txn;
-  txn = await epicGame.mintCharacterNFT(2);
+  txn = await epicGame.mintCharacterNFT(0);
   await txn.wait();
-  let returnedTokenuri = await epicGame.tokenURI(1);
-  console.log("Token URI", returnedTokenuri);
+  console.log("Minted NFt #1");
+
+  txn = await epicGame.mintCharacterNFT(1);
+  console.log("MInted Nft #2");
+
+  txn = await epicGame.mintCharacterNFT(2);
+  console.log("Minted Nft #3");
+
+  txn = await epicGame.mintCharacterNFT(1);
+  console.log("Minted Nft #4");
+
+  console.log("Done deploying and minting");
 }
 
 // We recommend this pattern to be able to use async/await everywhere
