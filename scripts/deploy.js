@@ -21,6 +21,8 @@ async function main() {
   txn = await epicGame.mintCharacterNFT(0);
   await txn.wait();
   console.log("Minted NFt #1");
+  let returnedTokenUri = await epicGame.tokenURI(1);
+  console.log("returned tokenURI : ", returnedTokenUri);
 
   txn = await epicGame.mintCharacterNFT(1);
   console.log("MInted Nft #2");
