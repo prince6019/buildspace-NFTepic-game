@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
 
 error ERC721Metadata__URI_QueryFor_NonExistentToken();
+error lowHp();
 
 /**
 @title contract for mint character Nfts
@@ -17,7 +18,7 @@ contract MyEpicGame is ERC721 {
     // using library Counters
     using Counters for Counters.Counter;
 
-    // struct
+    // struct for character NFTs
     struct characterAttributes {
         uint256 index;
         string name;
@@ -26,9 +27,28 @@ contract MyEpicGame is ERC721 {
         uint256 attackDamage;
         uint256 maxHp;
     }
-
+    // struct for the Boss to fight
+    struct bigBoss {
+        string name;
+        string imageUri;
+        uint256 hp;
+        uint256 maxHp;
+        uint256 attackDamage;
+    }
+    // nft minting event
+    event characterMintedNft(
+        address indexed sender,
+        uint256 indexed tokenId,
+        uint256 indexed characterIndex
+    );
+    event attackComplete(
+        address indexed sender,
+        uint256 indexed bossHp,
+        uint256 indexed playerHp
+    );
+    bigBoss private s_evilBoss;
     // array of type characterAttribute type
-    characterAttributes[] defaultCharacters;
+    characterAttributes[] private defaultCharacters;
 
     Counters.Counter private s_tokenIds;
 
@@ -40,8 +60,19 @@ contract MyEpicGame is ERC721 {
         string[] memory charactername,
         string[] memory characterImageUri,
         uint256[] memory characterHp,
-        uint256[] memory characterAttackDamage
+        uint256[] memory characterAttackDamage,
+        string memory bossName,
+        string memory bossImageUri,
+        uint256 bossHp,
+        uint256 bossAttackDamage
     ) ERC721("HEROES", "HERO") {
+        s_evilBoss = bigBoss(
+            bossName,
+            bossImageUri,
+            bossHp,
+            bossHp,
+            bossAttackDamage
+        );
         for (uint256 i = 0; i < charactername.length; i++) {
             defaultCharacters.push(
                 characterAttributes(
@@ -87,7 +118,11 @@ contract MyEpicGame is ERC721 {
         );
         s_NFTHolders[msg.sender] = newItemId;
         s_tokenIds.increment();
+        emit characterMintedNft(msg.sender, newItemId, _characterIndex);
     }
+
+    /// @notice it takes a tokenid and returns the url for your NFT
+    /// @return the base-64 encoded url of nft
 
     function tokenURI(
         uint256 _tokenId
@@ -124,5 +159,68 @@ contract MyEpicGame is ERC721 {
         );
 
         return string.concat(str1, json);
+    }
+
+    function attackBoss() public {
+        uint256 tokenId = s_NFTHolders[msg.sender];
+        characterAttributes storage player = s_NFTHolderAttributes[tokenId];
+
+        console.log(
+            "\nPlayer w/ character %s about to attack. Has %s HP and %s AD",
+            player.name,
+            player.hp,
+            player.attackDamage
+        );
+        console.log(
+            "Boss %s has %s HP and %s AD",
+            s_evilBoss.name,
+            s_evilBoss.hp,
+            s_evilBoss.attackDamage
+        );
+
+        if (player.hp <= 0 || s_evilBoss.hp <= 0) {
+            revert lowHp();
+        }
+        if (s_evilBoss.hp < player.attackDamage) {
+            s_evilBoss.hp = 0;
+        } else {
+            s_evilBoss.hp -= player.attackDamage;
+        }
+        if (player.hp < s_evilBoss.attackDamage) {
+            player.hp = 0;
+        } else {
+            player.hp -= s_evilBoss.attackDamage;
+        }
+
+        console.log("Player attacked boss. New Boss hp: %s", s_evilBoss.hp);
+        console.log("Boss attacked player. New Player hp:%s\n", player.hp);
+
+        emit attackComplete(msg.sender, s_evilBoss.hp, player.hp);
+    }
+
+    function checkIfUserHasNFT()
+        public
+        view
+        returns (characterAttributes memory)
+    {
+        uint256 userNfttokenId = s_NFTHolders[msg.sender];
+        if (userNfttokenId > 0) {
+            return s_NFTHolderAttributes[userNfttokenId];
+        } else {
+            characterAttributes memory emptystruct;
+            return emptystruct;
+        }
+    }
+
+    function getAlldefaultCharacters()
+        public
+        view
+        returns (characterAttributes[] memory)
+    {
+        return defaultCharacters;
+    }
+
+    function getBigBoss() public view returns (bigBoss memory) {
+        return s_evilBoss;
     }
 }
