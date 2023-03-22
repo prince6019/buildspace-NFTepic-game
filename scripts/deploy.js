@@ -21,17 +21,15 @@ async function main() {
 
   console.log(`deployed at ${epicGame.address}`);
 
-  let txn;
-  txn = await epicGame.mintCharacterNFT(0);
-  await txn.wait();
-  console.log("Minted NFt #1");
-  let returnedTokenUri = await epicGame.tokenURI(1);
-  console.log("returned tokenURI : ", returnedTokenUri);
+  // let txn;
+  // txn = await epicGame.mintCharacterNFT(0);
+  // await txn.wait();
+  // console.log("Minted NFt #1");
+  // let returnedTokenUri = await epicGame.tokenURI(1);
+  // console.log("returned tokenURI : ", returnedTokenUri);
 
-  txn = await epicGame.attackBoss();
-  txn.wait();
-  txn = await epicGame.attackBoss();
-  txn.wait();
+  // txn = await epicGame.attackBoss();
+  // txn.wait();
 
   // txn = await epicGame.mintCharacterNFT(1);
   // console.log("MInted Nft #2");
