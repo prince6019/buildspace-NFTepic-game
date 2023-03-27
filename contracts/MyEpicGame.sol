@@ -223,4 +223,8 @@ contract MyEpicGame is ERC721 {
     function getBigBoss() public view returns (bigBoss memory) {
         return s_evilBoss;
     }
+
+    function getTokenId() public view returns (Counters.Counter memory) {
+        return s_tokenIds;
+    }
 }
