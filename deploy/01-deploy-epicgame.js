@@ -11,18 +11,26 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   console.log(deployer);
 
   const arguments = [
-    ["Leo", "Aang", "Pikachu"],
     [
-      "https://i.imgur.com/pKd5Sdk.png",
-      "https://i.imgur.com/xVu4vFL.png",
-      "https://i.imgur.com/WMB6g9u.png",
+      "asac_schrader",
+      "deadpool",
+      "thomas_shelby",
+      "shinchan",
+      "jesse_pinkman",
+      "mr_bean",
     ],
-    [100, 200, 300],
-    [100, 50, 25],
-    "elon_musk",
-    "https://i.imgur.com/AksR0tt.png",
-    10000,
-    50,
+    [
+      "https://ipfs.io/ipfs/QmXzfPP7J8qFTRmaYeY5CJ3mUU91MiBNHp2g4QRncxsmTy?filename=asac_schrader.webp",
+      "https://ipfs.io/ipfs/QmU2ZS3JuHVQgCKcFRZQNVWXvkVtq9r8uyGu3ntsCKf5C2?filename=deadpool.jpg",
+      "https://ipfs.io/ipfs/QmZfJjNCNBMEq2uAjmC4NiFYfHUgc17iSUwGVqTH8nwiYd?filename=thomas_shelby.jpg",
+      "https://ipfs.io/ipfs/QmQv2pFohZEEQpmSCrAEukUDiMmtP8hgUxiXTU7T4wAt1N?filename=shinchan.webp",
+      "https://ipfs.io/ipfs/QmQEFohJnJ5z49awTap1r86tn5A8hAr3V2QPzCjacmE43g?filename=jesse_pinkman.jpg",
+      "https://ipfs.io/ipfs/QmSJnZBQuihoLxqkKiESdWJDh2NwoqpabPAMc97nkX9RUF?filename=Mr_bean.jpg",
+    ],
+    [300, 500, 400, 350, 400, 450],
+    [350, 400, 500, 450, 300, 400],
+    3000,
+    500,
   ];
 
   const epicGame = await deploy("MyEpicGame", {

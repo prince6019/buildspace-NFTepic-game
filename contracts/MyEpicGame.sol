@@ -5,6 +5,8 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/utils/Base64.sol";
+import "@chainlink/contracts/src/v0.8/interfaces/VRFCoordinatorV2Interface.sol";
+import "@chainlink/contracts/src/v0.8/VRFConsumerBaseV2.sol";
 
 error ERC721Metadata__URI_QueryFor_NonExistentToken();
 error lowHp();
@@ -14,10 +16,17 @@ error lowHp();
 @author Prince Sharma
 @notice you can use this contract for mint NFTs
 */
-contract MyEpicGame is ERC721 {
+contract MyEpicGame is ERC721, VRFConsumerBaseV2 {
     // using library Counters
     using Counters for Counters.Counter;
 
+    // chainlink variables
+    VRFCoordinatorV2Interface private immutable i_VRFCoordinator;
+    bytes32 private immutable i_gasLane;
+    uint64 immutable i_subscriptionId;
+    uint32 immutable i_callbackGasLimit;
+    uint16 constant REQUEST_CONFIRMATIONS = 3;
+    uint32 constant NUM_WORDS = 1;
     // struct for character NFTs
     struct characterAttributes {
         uint256 index;
@@ -27,13 +36,10 @@ contract MyEpicGame is ERC721 {
         uint256 attackDamage;
         uint256 maxHp;
     }
-    // struct for the Boss to fight
-    struct bigBoss {
-        string name;
-        string imageUri;
+    struct evilBoss {
         uint256 hp;
-        uint256 maxHp;
         uint256 attackDamage;
+        uint256 maxHp;
     }
     // nft minting event
     event characterMintedNft(
@@ -46,9 +52,12 @@ contract MyEpicGame is ERC721 {
         uint256 indexed bossHp,
         uint256 indexed playerHp
     );
-    bigBoss private s_evilBoss;
+    event requestedUserCharacter(uint256 indexed requestId);
     // array of type characterAttribute type
+    evilBoss private s_evilboss;
+
     characterAttributes[] private defaultCharacters;
+    characterAttributes private userCharacter;
 
     Counters.Counter private s_tokenIds;
 
@@ -61,18 +70,20 @@ contract MyEpicGame is ERC721 {
         string[] memory characterImageUri,
         uint256[] memory characterHp,
         uint256[] memory characterAttackDamage,
-        string memory bossName,
-        string memory bossImageUri,
         uint256 bossHp,
-        uint256 bossAttackDamage
-    ) ERC721("HEROES", "HERO") {
-        s_evilBoss = bigBoss(
-            bossName,
-            bossImageUri,
-            bossHp,
-            bossHp,
-            bossAttackDamage
-        );
+        uint256 bossAttackDamage,
+        address vrfCoordinatorV2,
+        uint64 subscriptionId,
+        bytes32 gasLane,
+        uint32 callbackGasLimit
+    ) ERC721("HEROES", "HERO") VRFConsumerBaseV2(vrfCoordinatorV2) {
+        s_evilboss = evilBoss(bossHp, bossAttackDamage, bossHp);
+
+        i_callbackGasLimit = callbackGasLimit;
+        i_subscriptionId = subscriptionId;
+        i_gasLane = gasLane;
+        i_VRFCoordinator = VRFCoordinatorV2Interface(vrfCoordinatorV2);
+
         for (uint256 i = 0; i < charactername.length; i++) {
             defaultCharacters.push(
                 characterAttributes(
@@ -161,42 +172,56 @@ contract MyEpicGame is ERC721 {
         return string.concat(str1, json);
     }
 
+    function requestRandomNumber() external {
+        uint256 requestId = i_VRFCoordinator.requestRandomWords(
+            i_gasLane,
+            i_subscriptionId,
+            REQUEST_CONFIRMATIONS,
+            i_callbackGasLimit,
+            NUM_WORDS
+        );
+        emit requestedUserCharacter(requestId);
+    }
+
+    function fulfillRandomWords(
+        uint256 /*requestId*/,
+        uint256[] memory randomWords
+    ) internal override {
+        uint256 indexOfCharacters = randomWords[0] % defaultCharacters.length;
+        userCharacter = defaultCharacters[indexOfCharacters];
+    }
+
     function attackBoss() public {
         uint256 tokenId = s_NFTHolders[msg.sender];
         characterAttributes storage player = s_NFTHolderAttributes[tokenId];
 
         console.log(
-            "\nPlayer w/ character %s about to attack. Has %s HP and %s AD",
-            player.name,
-            player.hp,
-            player.attackDamage
-        );
-        console.log(
             "Boss %s has %s HP and %s AD",
-            s_evilBoss.name,
-            s_evilBoss.hp,
-            s_evilBoss.attackDamage
+            s_evilboss.hp,
+            s_evilboss.attackDamage
         );
 
-        if (player.hp <= 0 || s_evilBoss.hp <= 0) {
+        if (player.hp <= 0 || s_evilboss.hp <= 0) {
             revert lowHp();
         }
-        if (s_evilBoss.hp < player.attackDamage) {
-            s_evilBoss.hp = 0;
+        if (s_evilboss.hp < player.attackDamage) {
+            s_evilboss.hp = 0;
         } else {
-            s_evilBoss.hp -= player.attackDamage;
+            s_evilboss.hp -= player.attackDamage;
         }
-        if (player.hp < s_evilBoss.attackDamage) {
+        if (player.hp < s_evilboss.attackDamage) {
             player.hp = 0;
         } else {
-            player.hp -= s_evilBoss.attackDamage;
+            player.hp -= s_evilboss.attackDamage;
         }
 
-        console.log("Player attacked boss. New Boss hp: %s", s_evilBoss.hp);
+        console.log("Player attacked boss. New Boss hp: %s", s_evilboss.hp);
         console.log("Boss attacked player. New Player hp:%s\n", player.hp);
 
-        emit attackComplete(msg.sender, s_evilBoss.hp, player.hp);
+        emit attackComplete(msg.sender, s_evilboss.hp, player.hp);
     }
+
+    // getter functions---------
 
     function checkIfUserHasNFT()
         public
@@ -220,8 +245,16 @@ contract MyEpicGame is ERC721 {
         return defaultCharacters;
     }
 
-    function getBigBoss() public view returns (bigBoss memory) {
-        return s_evilBoss;
+    function getUserCharacter()
+        public
+        view
+        returns (characterAttributes memory)
+    {
+        return userCharacter;
+    }
+
+    function getbigBoss() public view returns (evilBoss memory) {
+        return s_evilboss;
     }
 
     function getTokenId() public view returns (Counters.Counter memory) {

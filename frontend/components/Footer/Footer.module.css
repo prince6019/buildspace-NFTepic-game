@@ -1,0 +1,15 @@
+.footer{
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    border-top: 2px solid gray;
+}
+.footer_container{
+    width: 80%;
+    margin: 0 auto;
+    padding: 1rem;
+}
+.footer_container p{
+    font-size: 1.3rem;
+    text-align: center;
+}
