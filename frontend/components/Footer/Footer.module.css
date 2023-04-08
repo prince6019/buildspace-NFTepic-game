@@ -1,8 +1,10 @@
 .footer{
-    position: absolute;
+    position: fixed;
     bottom: 0;
     width: 100%;
     border-top: 2px solid gray;
+    z-index: 3;
+    /* margin-top: 10rem; */
 }
 .footer_container{
     width: 80%;

@@ -57,7 +57,7 @@ contract MyEpicGame is ERC721, VRFConsumerBaseV2 {
     evilBoss private s_evilboss;
 
     characterAttributes[] private defaultCharacters;
-    characterAttributes private userCharacter;
+    uint256 public s_index;
 
     Counters.Counter private s_tokenIds;
 
@@ -107,31 +107,6 @@ contract MyEpicGame is ERC721, VRFConsumerBaseV2 {
         s_tokenIds.increment();
     }
 
-    /// @notice mints the nft and updates the mapping
-    /// @dev increments the tokenid and return nothing
-
-    function mintCharacterNFT(uint256 _characterIndex) external {
-        uint256 newItemId = s_tokenIds.current();
-        _safeMint(msg.sender, newItemId);
-        s_NFTHolderAttributes[newItemId] = characterAttributes(
-            _characterIndex,
-            defaultCharacters[_characterIndex].name,
-            defaultCharacters[_characterIndex].imageUri,
-            defaultCharacters[_characterIndex].hp,
-            defaultCharacters[_characterIndex].attackDamage,
-            defaultCharacters[_characterIndex].maxHp
-        );
-
-        console.log(
-            "Minted Nft w/ tokenId %s and characterIndex %s",
-            newItemId,
-            _characterIndex
-        );
-        s_NFTHolders[msg.sender] = newItemId;
-        s_tokenIds.increment();
-        emit characterMintedNft(msg.sender, newItemId, _characterIndex);
-    }
-
     /// @notice it takes a tokenid and returns the url for your NFT
     /// @return the base-64 encoded url of nft
 
@@ -172,7 +147,7 @@ contract MyEpicGame is ERC721, VRFConsumerBaseV2 {
         return string.concat(str1, json);
     }
 
-    function requestRandomNumber() external {
+    function requestRandomNumber() public {
         uint256 requestId = i_VRFCoordinator.requestRandomWords(
             i_gasLane,
             i_subscriptionId,
@@ -188,7 +163,36 @@ contract MyEpicGame is ERC721, VRFConsumerBaseV2 {
         uint256[] memory randomWords
     ) internal override {
         uint256 indexOfCharacters = randomWords[0] % defaultCharacters.length;
-        userCharacter = defaultCharacters[indexOfCharacters];
+        console.log("randomindex is : ", indexOfCharacters);
+        s_index = indexOfCharacters;
+    }
+
+    /// @notice mints the nft and updates the mapping
+    /// @dev increments the tokenid and return nothing
+
+    function mintCharacterNFT() external {
+        uint256 _characterIndex = s_index;
+        console.log("index of Nft to be minted : ", s_index);
+
+        uint256 newItemId = s_tokenIds.current();
+        _safeMint(msg.sender, newItemId);
+        s_NFTHolderAttributes[newItemId] = characterAttributes(
+            _characterIndex,
+            defaultCharacters[_characterIndex].name,
+            defaultCharacters[_characterIndex].imageUri,
+            defaultCharacters[_characterIndex].hp,
+            defaultCharacters[_characterIndex].attackDamage,
+            defaultCharacters[_characterIndex].maxHp
+        );
+
+        console.log(
+            "Minted Nft w/ tokenId %s and characterIndex %s",
+            newItemId,
+            _characterIndex
+        );
+        s_NFTHolders[msg.sender] = newItemId;
+        s_tokenIds.increment();
+        emit characterMintedNft(msg.sender, newItemId, _characterIndex);
     }
 
     function attackBoss() public {
@@ -243,14 +247,6 @@ contract MyEpicGame is ERC721, VRFConsumerBaseV2 {
         returns (characterAttributes[] memory)
     {
         return defaultCharacters;
-    }
-
-    function getUserCharacter()
-        public
-        view
-        returns (characterAttributes memory)
-    {
-        return userCharacter;
     }
 
     function getbigBoss() public view returns (evilBoss memory) {

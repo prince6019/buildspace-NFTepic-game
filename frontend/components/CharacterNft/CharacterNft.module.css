@@ -1,0 +1,60 @@
+.characternft_container{
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 5rem;
+}
+.characternft_container_cardbox{
+    display: grid;
+    grid-template-columns: repeat(6,1fr);
+    gap: 1rem;
+}
+.characternft_container button{
+    width: 10rem;
+    align-self: center;
+    height: 3rem;
+    border: 2px solid #FFDF2B;
+    background-color: transparent;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: bolder;
+    cursor: pointer;
+    transition: 0.3s all ease-in;
+}
+.characternft_container button:hover{
+    background-color: #FFDF2B;
+    color:black;
+}
+
+.arena{
+    width: 100%;
+}
+.arena_container{
+    width: 100%;
+    display: flex;    
+    justify-content: space-between;
+
+    gap: 8rem;
+    align-items: center;
+}
+.arena button{
+    height: 3rem;
+    width: 7rem;
+    border-radius: 20px;
+    border: 2px solid #FFDF2B;
+    background-color: transparent;
+    transition: all ease-in 0.3s;
+    cursor: pointer;
+    font-weight: 600;
+    margin-bottom: 3rem;
+}
+.arena button:hover{
+    background-color: #FFDF2B;
+    color: black;
+}
+
+@media only screen and (max-width:968px){
+    .characternft_container_cardbox{
+        grid-template-columns: repeat(3,1fr);
+    }
+}
